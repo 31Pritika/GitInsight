@@ -7,12 +7,24 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS (allow your frontend)
-app.use(cors({
-  origin: "https://gitinsight-kappa.vercel.app/",
-  methods: ['GET', 'POST']
-}));
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowed = [
+      'https://gitinsight-kappa.vercel.app',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173'
+    ]
+    // allow requests with no origin (mobile apps, curl, etc)
+    if (!origin || allowed.some(o => origin.startsWith(o))) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}
 
-app.use(express.json());
+app.use(cors(corsOptions))
 
 // ------------------ USER ------------------
 app.get('/api/user/:username', async (req, res) => {
