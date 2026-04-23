@@ -160,19 +160,29 @@ Write only the summary, nothing else.
     `;
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash'
+      model: 'gemini-flash-1.5'
     });
 
     const result = await model.generateContent(prompt);
-    const summary = result.response.text();
-
+    // Try Gemini v1.5-flash-latest, fallback to .text() if needed
+    let summary = '';
+    if (result?.response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      summary = result.response.candidates[0].content.parts[0].text;
+    } else if (typeof result.response.text === 'function') {
+      summary = result.response.text();
+    } else {
+      summary = 'No summary generated';
+    }
     res.json({ summary });
   } catch (error) {
-    console.error(error.response?.data || error.message || error);
-    res.status(500).json({ error: 'Failed to generate summary' });
+    console.log("🔥 SUMMARY ERROR FULL:");
+    console.log(error.response?.data || error.message || error);
+    return res.status(500).json({
+      error: 'Failed to generate summary',
+      debug: error.response?.data || error.message
+    });
   }
 });
-
 // ------------------ ROOT ------------------
 app.get('/', (req, res) => {
   res.send('API is running...');
